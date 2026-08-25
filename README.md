@@ -28,6 +28,8 @@ node server.js --host 127.0.0.1 --port 11611 `
 Endpoint: `http://127.0.0.1:11611/mcp`  
 Health: `http://127.0.0.1:11611/healthz`
 
+`GET /` also returns a small successful response for supervisors that require root endpoint health in addition to `/healthz`.
+
 Set `SKILLS_WRITE_TOKEN` to provide the write token explicitly. If it is empty, the server creates a random 256-bit token in the token file on first start. Keep that file private.
 
 For MCP Control Center, connect through the MCP's Gate endpoint or Unified endpoint. Configure Unified to forward Bearer only for this MCP profile; ordinary read-only sessions do not need a token.

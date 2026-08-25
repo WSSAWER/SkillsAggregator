@@ -242,6 +242,10 @@ function createMcpServer({ host, port, dataDirectory, tokenFile }) {
   const server = http.createServer(async (request, response) => {
     try {
       const url = new URL(request.url, `http://${request.headers.host || 'localhost'}`);
+      if (request.method === 'GET' && url.pathname === '/') {
+        send(response, 200, 'text/plain; charset=utf-8', 'Skills Aggregator MCP');
+        return;
+      }
       if (request.method === 'GET' && url.pathname === '/healthz') {
         send(response, 200, 'application/json; charset=utf-8', JSON.stringify({ ok: true, server: SERVER_INFO.name, skills: store.list().length }));
         return;
