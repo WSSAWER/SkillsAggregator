@@ -8,8 +8,12 @@ Small Streamable HTTP MCP server for sharing chat skills.
 - `get_skill(name)` — returns the complete `SKILL.md` by canonical name; no authentication is required.
 - `write_skill(name, description, markdown, overwrite)` — creates or replaces a skill from Markdown pasted or attached in chat.
 - `delete_skill(name)` — deletes a skill by canonical name.
+- `write_skill_by_code(code, name, description, markdown, overwrite)` — performs the same write when the supplied code exactly matches the private write token.
+- `delete_skill_by_code(code, name)` — deletes a skill only when the supplied code exactly matches the private write token.
 
 `write_skill` and `delete_skill` require `Authorization: Bearer <write token>` on the MCP `tools/call` request. `description` is mandatory and must concisely explain what the skill does and when an agent should use it. The server replaces any supplied frontmatter with canonical `name` and `description` fields, so the folder and metadata cannot diverge.
+
+Prefer the Bearer-protected tools. `write_skill_by_code` and `delete_skill_by_code` are an alternative for MCP clients that cannot set request headers. They receive the same secret as the `code` argument, compare it in constant time, and perform no filesystem mutation when it does not match. The code is never returned in a tool result.
 
 The complete generated `SKILL.md`, including frontmatter, is limited to 60,000 characters. Skills are intentionally returned in one response without pagination.
 

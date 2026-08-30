@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PROTOCOL_VERSION = '2025-03-26';
-const SERVER_INFO = { name: 'skills-aggregator', version: '1.1.0' };
+const SERVER_INFO = { name: 'skills-aggregator', version: '1.2.0' };
 const MAX_SKILL_CHARACTERS = 60000;
 const MAX_DESCRIPTION_CHARACTERS = 1000;
 
@@ -197,6 +197,35 @@ function toolDefinitions() {
         required: ['name'],
         additionalProperties: false
       }
+    },
+    {
+      name: 'write_skill_by_code',
+      description: 'Create or replace a skill using the write code as an explicit tool argument. Use this only when the MCP client cannot send Authorization: Bearer. The code must exactly match the server write token; otherwise no file is created or changed. description must explain what the skill does and when to use it. The complete generated SKILL.md may not exceed 60000 characters.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          code: { type: 'string', description: 'Exact private write code supplied by the Skills Aggregator owner.' },
+          name: { type: 'string', description: 'Unique canonical lowercase name used to store and retrieve the skill.' },
+          description: { type: 'string', maxLength: MAX_DESCRIPTION_CHARACTERS, description: 'A concise single-line explanation of what the skill does and when to use it.' },
+          markdown: { type: 'string', maxLength: MAX_SKILL_CHARACTERS, description: 'Skill Markdown from the chat or attached .md file. Existing frontmatter is replaced.' },
+          overwrite: { type: 'boolean', default: false, description: 'Allow replacing an existing skill.' }
+        },
+        required: ['code', 'name', 'description', 'markdown'],
+        additionalProperties: false
+      }
+    },
+    {
+      name: 'delete_skill_by_code',
+      description: 'Delete a skill by canonical name using the write code as an explicit tool argument. Use this only when Bearer headers are unavailable. The code must exactly match the server write token; otherwise no file is deleted.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          code: { type: 'string', description: 'Exact private write code supplied by the Skills Aggregator owner.' },
+          name: { type: 'string', description: 'Exact canonical skill name returned by list_skills.' }
+        },
+        required: ['code', 'name'],
+        additionalProperties: false
+      }
     }
   ];
 }
@@ -276,7 +305,7 @@ function createMcpServer({ host, port, dataDirectory, tokenFile }) {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: { listChanged: false } },
           serverInfo: SERVER_INFO,
-          instructions: 'Call list_skills to discover canonical skill names and when each skill applies, then call get_skill by name to load the complete instructions. write_skill and delete_skill require a Bearer write token.'
+          instructions: 'Call list_skills to discover canonical skill names and when each skill applies, then call get_skill by name to load the complete instructions. Prefer Bearer-protected write_skill and delete_skill. When the client cannot send a Bearer header, use write_skill_by_code or delete_skill_by_code with the private write code.'
         }), sessionId);
         return;
       }
@@ -314,6 +343,18 @@ function createMcpServer({ host, port, dataDirectory, tokenFile }) {
         } else if (name === 'delete_skill') {
           if (!tokenMatches(bearerToken(request), writeToken)) {
             sendSse(response, rpcError(id, -32001, 'Bearer write token is required.'));
+            return;
+          }
+          result = textResult(store.delete(args.name));
+        } else if (name === 'write_skill_by_code') {
+          if (!tokenMatches(String(args.code || ''), writeToken)) {
+            sendSse(response, rpcError(id, -32001, 'Write code is invalid.'));
+            return;
+          }
+          result = textResult({ saved: true, skill: store.write(args.name, args.description, args.markdown, args.overwrite === true) });
+        } else if (name === 'delete_skill_by_code') {
+          if (!tokenMatches(String(args.code || ''), writeToken)) {
+            sendSse(response, rpcError(id, -32001, 'Write code is invalid.'));
             return;
           }
           result = textResult(store.delete(args.name));
