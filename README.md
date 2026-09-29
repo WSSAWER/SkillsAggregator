@@ -1,5 +1,9 @@
 # SkillsAggregator MCP
 
+Original code is licensed for noncommercial use only. Commercial use requires
+a separate written agreement; see [LICENSE.txt](LICENSE.txt). These terms do not
+license user-supplied skills, which retain their authors' terms.
+
 Small Streamable HTTP MCP server for sharing chat skills.
 
 ## Tools

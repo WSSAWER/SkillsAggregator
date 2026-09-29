@@ -6,10 +6,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "self-test": "node server.js --self-test"
+    "self-test": "node .test/license.cjs && node server.js --self-test"
   },
   "engines": {
     "node": ">=18"
   },
-  "license": "UNLICENSED"
+  "license": "SEE LICENSE IN LICENSE.txt"
 }
